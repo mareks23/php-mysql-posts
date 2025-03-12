@@ -10,6 +10,26 @@ try {
     $conn = new PDO("mysql:host=$servername;dbname=$sql_store", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
+    // Check if form is submitted
+    if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['title']) && isset($_POST['content'])) {
+        $title = htmlspecialchars($_POST['title']);
+        $content = htmlspecialchars($_POST['content']);
+        $created_at = date('Y-m-d H:i:s'); // Current date and time
+
+        // Insert the new post into the database
+        $sql = "INSERT INTO posts (title, content, created_at) VALUES (:title, :content, :created_at)";
+        $stmt = $conn->prepare($sql);
+        $stmt->bindParam(':title', $title);
+        $stmt->bindParam(':content', $content);
+        $stmt->bindParam(':created_at', $created_at);
+
+        if ($stmt->execute()) {
+            echo "<p>Post added successfully!</p>";
+        } else {
+            echo "<p>Error adding post.</p>";
+        }
+    }
+
     // SQL query to get posts and comments
     $sql = "SELECT posts.post_id, posts.title, posts.content, posts.created_at, comments.comment_id, comments.comment_text, comments.comment_author
             FROM posts
@@ -35,7 +55,7 @@ try {
                 'comments' => []
             ];
         }
-        
+
         // If there is a comment, add it to the post
         if ($row['comment_id'] !== null) {
             $posts[$post_id]['comments'][] = [
@@ -71,3 +91,16 @@ try {
 // Close the connection
 $conn = null;
 ?>
+
+<!-- HTML form for submitting a new post -->
+<h2>Add New Post</h2>
+<form method="POST" action="">
+    <label for="title">Title:</label><br>
+    <input type="text" id="title" name="title" required><br><br>
+    
+    <label for="content">Content:</label><br>
+    <textarea id="content" name="content" rows="4" cols="50" required></textarea><br><br>
+    
+    <input type="submit" value="Add Post">
+</form>
+
